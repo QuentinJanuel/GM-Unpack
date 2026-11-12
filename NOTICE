@@ -1,0 +1,6 @@
+GM-Unpack is MIT-licensed. It depends on, without bundling:
+
+- 7z-wasm (7-Zip by Igor Pavlov): GNU LGPL-2.1-or-later, plus the unRAR restriction for its
+  RAR decoder (the code may not be used to recreate the RAR compression algorithm).
+- @zip.js/zip.js: BSD-3-Clause.
+- chardet: MIT.

@@ -1,0 +1,75 @@
+name: Release
+
+# Started by hand (Actions > Release > Run workflow), from main only. It works out the next version
+# from the npm registry, builds and tests the package as that version, publishes it to npm with
+# trusted publishing (OIDC, no token) and provenance, then creates the GitHub release, and with it
+# the v<version> tag, on the commit being built. The version is set at build time, not committed.
+# npm's trusted publisher for @sculptr/gm-unpack names this repository and this file, release.yml.
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: Which part of the current version to increase
+        type: choice
+        options: [patch, minor, major]
+        default: patch
+      version:
+        description: Or an exact version, e.g. 1.0.0 (overrides the choice above)
+        type: string
+        default: ""
+
+run-name: Release ${{ inputs.version || inputs.bump }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      contents: write # the GitHub release and its tag
+      id-token: write # npm trusted publishing and provenance
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # npm 11.5.1+ (Node 24) is the first that publishes through OIDC.
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Work out the version
+        id: version
+        env:
+          BUMP: ${{ inputs.bump }}
+          EXACT: ${{ inputs.version }}
+        run: |
+          current=$(npm view @sculptr/gm-unpack version)
+          version=$(node scripts/next-version.mjs "$current" "$BUMP" "$EXACT")
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version" >/dev/null; then
+            echo "::error::the tag v$version already exists"; exit 1
+          fi
+          echo "current $current, releasing $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - run: npm ci
+      - run: npm pkg set version="$VERSION"
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+      - run: npm run build
+      - run: npm run typecheck
+      - run: npm test
+
+      - name: Publish
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          npm publish --access public --provenance
+          gh release create "v$VERSION" --target "$GITHUB_SHA" --title "v$VERSION" --notes ""

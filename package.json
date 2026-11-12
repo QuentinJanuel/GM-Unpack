@@ -1,0 +1,57 @@
+{
+  "name": "@sculptr/gm-unpack",
+  "version": "0.0.0",
+  "description": "Any GameMaker game download in, one normalised game out: every archive and self-contained export opened.",
+  "keywords": [
+    "gamemaker",
+    "archive",
+    "unpack",
+    "7z",
+    "rar"
+  ],
+  "homepage": "https://github.com/QuentinJanuel/GM-Unpack#readme",
+  "bugs": "https://github.com/QuentinJanuel/GM-Unpack/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/QuentinJanuel/GM-Unpack.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "bin": {
+    "gm-unpack": "dist/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc",
+    "test": "node --test test/*.test.ts scripts/*.test.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "7z-wasm": "1.2.0",
+    "@zip.js/zip.js": "2.8.52",
+    "chardet": "2.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}
